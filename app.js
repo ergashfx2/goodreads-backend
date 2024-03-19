@@ -10,6 +10,7 @@ app.use(cors({
   }));
 
 app.use('/api', require('./routes'))
+app.use('/uploads', express.static('uploads'));
 
 const PORT = process.env.PORT || 8081
 
