@@ -98,12 +98,12 @@ class Database {
     
     async get_book_detail(book_id) {
         const selectQuery = "SELECT b.*, u.name FROM books b JOIN users u ON b.author = u.id WHERE b.id = $1;"       
-        const response = await pool.query(selectQuery, [parseInt(book_id)])
+        const response = await pool.query(selectQuery, [book_id])
         return response.rows
     }
 
     async get_feeds() {
-        const selectQuery = "SELECT * FROM books"       
+        const selectQuery = "SELECT books.*, users.name AS author FROM books JOIN users ON books.author = users.id;"       
         const response = await pool.query(selectQuery)
         return response.rows
     }
