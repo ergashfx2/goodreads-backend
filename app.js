@@ -9,7 +9,7 @@ app.use(cors({
   credentials: true, 
 }));
 app.use(cors({
-  origin: 'https://readopia-backend.vercel.app/',
+  origin: 'https://readopia.vercel.app',
   credentials: true,
 }));
 
