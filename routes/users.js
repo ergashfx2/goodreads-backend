@@ -33,6 +33,12 @@ const verifyToken = (req, res, next) => {
 };
 
 
+router.get('/my/',async (req,res)=>{
+  res.status(200).json({
+    success:True,
+    message: "Running"
+  })
+})
 
 router.get('/', async (req, res) => {
   try {
