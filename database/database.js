@@ -103,36 +103,11 @@ class Database {
         return response.rows
     }
 
-    async get_feeds(uuid=null) {
-        if (uuid!=null){
-            const selectQuery = `
-            SELECT 
-            books.*, 
-            users.name AS author, 
-            users.avatar, 
-            users.id AS author_id 
-        FROM 
-            books 
-        LEFT JOIN 
-            users 
-        ON 
-            books.author = $1 
-        JOIN 
-            likes 
-        ON 
-            likes.book_id = books.id 
-        WHERE 
-            likes.user_id = $1;
-        
-          `
-            const response = await pool.query(selectQuery,[uuid])
-            console.log(response.rows)
-            return response.rows
-        }else{
+    async get_feeds() {
             const selectQuery = 'SELECT books.*, users.name AS author, users.avatar,users.id AS author_id FROM books JOIN users ON books.author = users.id;'
             const response = await pool.query(selectQuery)
             return response.rows
-        }
+        
     }
 
     async my_profile(uuid) {

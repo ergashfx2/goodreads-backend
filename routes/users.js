@@ -33,24 +33,14 @@ const verifyToken = (req, res, next) => {
 };
 
 
-router.get('/my/',async (req,res)=>{
-  res.status(200).json({
-    success:True,
-    message: "Running"
-  })
-})
 
 router.get('/', async (req, res) => {
-    res.status(200).json({
-    success:True,
-    message: "Running"
-  })
-  // try {
-  //   const db = await pool.query(`SELECT * FROM db`)
-  //   res.status(200).json(db.rows)
-  // } catch (error) {
-  //   res.status(500).json({ message: error.message })
-  // }
+  try {
+    const db = await pool.query(`SELECT * FROM users`)
+    res.status(200).json(db.rows)
+  } catch (error) {
+    res.status(500).json({ message: error.message })
+  }
 })
 
 router.post('/create/', async (req, res) => {
@@ -212,26 +202,12 @@ router.get('/book-detail/', async (req,res)=>{
 })
 
 router.get('/get-feeds/', async (req, res) => {
-  try {
-    const token = req.headers.authorization?.split(' ')[1]; 
+  const feeds = await db.get_feeds()
+  res.status(200).json({
+    success:true,
+    feeds : feeds
+  })
 
-    if (token) {
-      const decodedToken = jwt.verify(token, jwtSecret); 
-      const feeds = await db.get_feeds(decodedToken.uuid);
-      return res.status(200).json({
-        success: true,
-        feeds: feeds
-      });
-    }else{
-
-    }
-  } catch (error) {
-    console.error('Error fetching feeds:', error);
-    return res.status(500).json({
-      success: false,
-      message: 'Internal server error'
-    });
-  }
 });
 
 router.get('/my-profile/',verifyToken,async (req,res)=>{
