@@ -8,6 +8,10 @@ app.use(cors({
   origin: 'http://localhost:3000',
   credentials: true, 
 }));
+app.use(cors({
+  origin: 'https://readopia-backend.vercel.app/',
+  credentials: true,
+}));
 
 app.use('/api', require('./routes'))
 app.use('/uploads', express.static('uploads'));
