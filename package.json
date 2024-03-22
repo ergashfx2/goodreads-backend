@@ -9,7 +9,7 @@
     "multer": "^1.4.5-lts.1",
     "pg": "^8.11.3"
   },
-  "name": "goodreads-backend",
+  "name": "readopia-backend",
   "version": "1.0.0",
   "main": "app.js",
   "scripts": {
