@@ -201,14 +201,102 @@ router.get('/book-detail/', async (req,res)=>{
   })
 })
 
-router.get('/get-feeds/',async (req,res)=>{
-  const feeds = await db.get_feeds()
-  console.log(feeds)
-  res.status(200).json({
-    success:true,
-    feeds : feeds
-  })
+router.get('/get-feeds/', async (req, res) => {
+  try {
+    const token = req.headers.authorization?.split(' ')[1]; 
+
+    if (token) {
+      const decodedToken = jwt.verify(token, jwtSecret); 
+      const feeds = await db.get_feeds(decodedToken.uuid);
+      return res.status(200).json({
+        success: true,
+        feeds: feeds
+      });
+    }else{
+
+    }
+  } catch (error) {
+    console.error('Error fetching feeds:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Internal server error'
+    });
+  }
+});
+
+router.get('/my-profile/',verifyToken,async (req,res)=>{
+    const profile = await db.my_profile(req.uuid)
+    console.log(profile)
+    res.status(200).json({
+      success:true,
+      profile : profile
+    })
 })
 
+
+router.get('/get-profile/',async (req,res)=>{
+  if (!req.query.author_id){
+    const profile = await db.my_profile(req.uuid)
+    res.status(200).json({
+      success:true,
+      profile : profile
+    })
+  }else{
+    const author_id = req.query.author_id
+    const profile = await db.get_profile(author_id)
+    res.status(200).json({
+      success:true,
+      profile:profile
+    })
+  }
+})
+
+router.patch('/update-user/',verifyToken,async (req,res)=>{
+  if (req.body.image){
+    const upload = await db.update_user_image(req.uuid,req.body.image)
+    if (upload.success){
+      res.status(200).json({
+        success: true,
+        message : "Updated successfully",
+        image : req.body.image
+      })
+      console.log("Success")
+    }else{
+      res.status(400).json({
+        success: false,
+        message : "Something went wrong"
+      })
+    }
+  }else {
+    const user = req.body;
+    console.log(user.bio)
+    const update = await db.update_user_info(user.name,user.email,user.bio,user.gender,user.address,req.uuid)
+    if (update.success){
+      res.status(200).json({
+        success:true,
+        message:"Updated Successfully"
+      })
+    }else{
+      res.status(400).json({
+        success:false,
+        message : "Something went wrong"
+      })
+    }
+
+  }
+
+})
+
+router.post('/like/',verifyToken,async (req,res)=>{
+  const like = req.body
+  console.log(like.book_id)
+  const response = await db.like(Number(like.book_id),req.uuid)
+  if (response.success){
+    res.status(200).json({
+      success:true,
+      id : crypto.randomUUID()
+    })
+  }
+})
 
 module.exports = router
