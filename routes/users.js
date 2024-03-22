@@ -41,12 +41,16 @@ router.get('/my/',async (req,res)=>{
 })
 
 router.get('/', async (req, res) => {
-  try {
-    const db = await pool.query(`SELECT * FROM db`)
-    res.status(200).json(db.rows)
-  } catch (error) {
-    res.status(500).json({ message: error.message })
-  }
+    res.status(200).json({
+    success:True,
+    message: "Running"
+  })
+  // try {
+  //   const db = await pool.query(`SELECT * FROM db`)
+  //   res.status(200).json(db.rows)
+  // } catch (error) {
+  //   res.status(500).json({ message: error.message })
+  // }
 })
 
 router.post('/create/', async (req, res) => {
