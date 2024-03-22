@@ -3,16 +3,20 @@ require('dotenv').config()
 const cors = require('cors');
 const app = express()
 
-app.use(express.json())
+const allowedOrigins = ['https://readopia.vercel.app', 'http://localhost:3000'];
 app.use(cors({
-  origin: 'http://localhost:3000',
-  credentials: true, 
-}));
-app.use(cors({
-  origin: 'https://readopia.vercel.app',
-  credentials: true,
+  origin: function (origin, callback) {
+    // Check if the origin is allowed
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true // Allow credentials (e.g., cookies, authorization headers)
 }));
 
+app.use(express.json())
 app.use('/api', require('./routes'))
 app.use('/uploads', express.static('uploads'));
 
