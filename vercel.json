@@ -6,11 +6,8 @@
       "use": "@vercel/node"
     }
   ],
-
   "routes": [
-    { "src": "/api/(.*)", "dest": "/routes/$1" },
-    { "src": "/uploads/(.*)", "dest": "/uploads/$1" },
-    { "src": "/users/(.*)", "dest": "/users/$1" }
+    { "src": "/api/(.*)", "dest": "routes/$1" },
+    { "src": "/uploads/(.*)", "dest": "uploads/$1" }
   ]
-
 }
