@@ -214,6 +214,12 @@ class Database {
           };
         }
       }
+
+      async filter_feeds(category){
+        const selectQuery = "SELECT * FROM books WHERE category = $1"
+        const feeds = await pool.query(selectQuery,[category])
+        return feeds
+      }
       
 }
 

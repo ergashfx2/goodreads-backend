@@ -255,7 +255,6 @@ router.patch('/update-user/',verifyToken,async (req,res)=>{
     }
   }else {
     const user = req.body;
-    console.log(user.bio)
     const update = await db.update_user_info(user.name,user.email,user.bio,user.gender,user.address,req.uuid)
     if (update.success){
       res.status(200).json({
@@ -283,6 +282,15 @@ router.post('/like/',verifyToken,async (req,res)=>{
       id : crypto.randomUUID()
     })
   }
+})
+
+router.get('/filter/',async (req,res)=>{
+  const category = req.query.category
+  const Filtered = db.filter_feeds(category)
+  res.status(200).json({
+    success : true,
+    feeds: Filtered
+  })
 })
 
 module.exports = router

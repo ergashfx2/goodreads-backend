@@ -6,14 +6,13 @@ const app = express()
 const allowedOrigins = ['https://readopia.vercel.app', 'http://localhost:3000'];
 app.use(cors({
   origin: function (origin, callback) {
-    // Check if the origin is allowed
     if (!origin || allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
       callback(new Error('Not allowed by CORS'));
     }
   },
-  credentials: true // Allow credentials (e.g., cookies, authorization headers)
+  credentials: true 
 }));
 
 app.use(express.json())
