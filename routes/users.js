@@ -14,6 +14,7 @@ const fs = require('fs');
 const path = require('path');
 const Book = require("../database/database")
 const book = new Book()
+const { jwtDecode } = require('jwt-decode');
 
 
 const verifyToken = (req, res, next) => {
@@ -140,6 +141,7 @@ router.post('/create-collection/', verifyToken, async (req, res) => {
 
 })
 
+
 router.post('/delete-collections/', verifyToken, async (req, res) => {
   const collection_names = req.body.selectedValues
   try {
@@ -179,8 +181,9 @@ router.get('/collection-books/', verifyToken, async (req, res) => {
 
 router.post('/create-book/', verifyToken, async (req, res) => {
   try {
-    const book = await db.create_book(req.body.title, req.body.description, req.body.category, req.body.subcategory, req.uuid, req.body.tags, req.body.images[0],req.body.collection)
-    if (book.success) {0
+    const book = await db.create_book(req.body.title, req.body.description, req.body.category, req.body.subcategory, req.uuid, req.body.tags, req.body.images[0], req.body.collection)
+    if (book.success) {
+      0
       res.status(200).json({
         success: true,
       })
@@ -192,7 +195,7 @@ router.post('/create-book/', verifyToken, async (req, res) => {
 })
 
 
-router.get('/book-detail/', async (req,res)=>{
+router.get('/book-detail/', async (req, res) => {
   const book = await db.get_book_detail(req.query.book_id);
   res.status(200).json({
     success: true,
@@ -202,69 +205,91 @@ router.get('/book-detail/', async (req,res)=>{
 })
 
 router.get('/get-feeds/', async (req, res) => {
-  const feeds = await db.get_feeds()
-  res.status(200).json({
-    success:true,
-    feeds : feeds
-  })
+  try {
+      let likes = [];
 
+      if (req.headers['authorization']) {
+          const token = req.headers['authorization'].split(' ')[1];
+          const decodedToken = jwtDecode(token);
+          const all_likes = await db.get_user_likes(decodedToken.uuid);
+          likes = all_likes.map((book) => book.book_id);
+      }
+
+      let feeds;
+      if (req.query.category) {
+          console.log(req.query.category);
+          feeds = await db.filter_feeds(req.query.category);
+      } else {
+          feeds = await db.get_feeds();
+      }
+
+      res.status(200).json({
+          success: true,
+          feeds: feeds,
+          likes: likes
+      });
+  } catch (error) {
+      console.error("Error fetching feeds:", error);
+      res.status(500).json({ success: false, error: "Error fetching feeds" });
+  }
 });
 
-router.get('/my-profile/',verifyToken,async (req,res)=>{
-    const profile = await db.my_profile(req.uuid)
-    console.log(profile)
-    res.status(200).json({
-      success:true,
-      profile : profile
-    })
+
+router.get('/my-profile/', verifyToken, async (req, res) => {
+  const profile = await db.my_profile(req.uuid)
+  console.log(profile)
+  res.status(200).json({
+    success: true,
+    profile: profile
+  })
 })
 
 
-router.get('/get-profile/',async (req,res)=>{
-  if (!req.query.author_id){
+router.get('/get-profile/', async (req, res) => {
+  if (!req.query.author_id) {
     const profile = await db.my_profile(req.uuid)
     res.status(200).json({
-      success:true,
-      profile : profile
+      success: true,
+      profile: profile
     })
-  }else{
+  } else {
     const author_id = req.query.author_id
     const profile = await db.get_profile(author_id)
     res.status(200).json({
-      success:true,
-      profile:profile
+      success: true,
+      profile: profile
     })
   }
 })
 
-router.patch('/update-user/',verifyToken,async (req,res)=>{
-  if (req.body.image){
-    const upload = await db.update_user_image(req.uuid,req.body.image)
-    if (upload.success){
+router.patch('/update-user/', verifyToken, async (req, res) => {
+  if (req.body.image) {
+    const upload = await db.update_user_image(req.uuid, req.body.image)
+    if (upload.success) {
       res.status(200).json({
         success: true,
-        message : "Updated successfully",
-        image : req.body.image
+        message: "Updated successfully",
+        image: req.body.image
       })
       console.log("Success")
-    }else{
+    } else {
       res.status(400).json({
         success: false,
-        message : "Something went wrong"
+        message: "Something went wrong"
       })
     }
-  }else {
+  } else {
     const user = req.body;
-    const update = await db.update_user_info(user.name,user.email,user.bio,user.gender,user.address,req.uuid)
-    if (update.success){
+    const update = await db.update_user_info(user.name, user.email, user.bio, user.gender, user.address, req.uuid)
+    if (update.success) {
       res.status(200).json({
-        success:true,
-        message:"Updated Successfully"
+        success: true,
+        message: "Updated Successfully"
       })
-    }else{
+    } else {
       res.status(400).json({
-        success:false,
-        message : "Something went wrong"
+        success: false,
+        message: "Something went wrong"
       })
     }
 
@@ -272,25 +297,46 @@ router.patch('/update-user/',verifyToken,async (req,res)=>{
 
 })
 
-router.post('/like/',verifyToken,async (req,res)=>{
+router.post('/like/', verifyToken, async (req, res) => {
   const like = req.body
-  console.log(like.book_id)
-  const response = await db.like(Number(like.book_id),req.uuid)
-  if (response.success){
+  const response = await db.like(Number(like.book_id), req.uuid)
+  if (response.success) {
     res.status(200).json({
-      success:true,
-      id : crypto.randomUUID()
+      success: true,
+      id: crypto.randomUUID()
     })
   }
 })
 
-router.get('/filter/',async (req,res)=>{
-  const category = req.query.category
-  const Filtered = db.filter_feeds(category)
+router.post('/unlike/', verifyToken, async (req, res) => {
+  const like = req.body
+  const response = await db.unlike(like.book_id, req.uuid)
+    res.status(200).json({
+      success: true,
+      id: crypto.randomUUID()
+
+})
+})
+
+router.post('/comment/', verifyToken, async (req, res) => {
+  const comment = req.body
+  await db.create_comment(comment.comment,comment.book_id, req.uuid)
+    res.status(200).json({
+      success: true,
+      id: crypto.randomUUID()
+    })
+
+})
+
+router.get('/my-liked-books/', verifyToken, async (req, res) => {
+  const uuid = req.uuid
+  const books = await db.get_my_liked_books(uuid)
   res.status(200).json({
-    success : true,
-    feeds: Filtered
+    success: true,
+    books: books
   })
 })
+
+
 
 module.exports = router

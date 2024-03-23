@@ -98,10 +98,33 @@ class Database {
 
 
     async get_book_detail(book_id) {
-        const selectQuery = "SELECT b.*, u.name FROM books b JOIN users u ON b.author = u.id WHERE b.id = $1;"
-        const response = await pool.query(selectQuery, [book_id])
-        return response.rows
+        const selectQuery = `
+            SELECT 
+                b.*,
+                u.name AS author_name,
+                uc.name AS commenter_name,
+                uc.avatar AS commenter_avatar,
+                c.comment AS comment
+            FROM 
+                books b
+            JOIN 
+                users u ON b.author = u.id
+            LEFT JOIN 
+                comments c ON b.id = c.book_id
+            LEFT JOIN 
+                users uc ON c.user_id = uc.id
+            WHERE
+                b.id = $1;
+        `;
+        try {
+            const response = await pool.query(selectQuery, [book_id]);
+            return response.rows;
+        } catch (error) {
+            console.error('Error fetching book details:', error);
+            throw error;
+        }
     }
+    
 
     async get_feeds() {
             const selectQuery = 'SELECT books.*, users.name AS author, users.avatar,users.id AS author_id FROM books JOIN users ON books.author = users.id;'
@@ -192,6 +215,14 @@ class Database {
 
     async like(book_id, user_id) {
         try {
+            const query = 'SELECT * FROM likes WHERE book_id = $1 AND user_id = $2'
+            const res = await pool.query(query,[book_id,user_id])
+            if (res.rows.length > 0){
+                return {
+                    success : true
+                }
+
+            }else{
           const likeQuery = "INSERT INTO likes (book_id, user_id) VALUES ($1, $2) RETURNING *;";
           const response = await pool.query(likeQuery, [book_id, user_id]);
           
@@ -206,6 +237,7 @@ class Database {
               message: "Failed to insert like"
             };
           }
+        }
         } catch (error) {
           console.error('Error while inserting like:', error);
           return {
@@ -215,10 +247,66 @@ class Database {
         }
       }
 
+      async unlike (book_id,user_id){
+        try {
+            const query = 'DELETE FROM likes WHERE book_id = $1 AND user_id = $2';
+            await pool.query(query,[book_id,user_id])
+        }catch (error){
+            console.error(error)
+        }
+      }
+
       async filter_feeds(category){
-        const selectQuery = "SELECT * FROM books WHERE category = $1"
+        const selectQuery = `
+        SELECT 
+            books.*, 
+            users.name AS author, 
+            users.avatar, 
+            users.id AS author_id 
+        FROM 
+            books 
+        JOIN 
+            users 
+        ON 
+            books.author = users.id
+        WHERE 
+            books.subcategory  = $1;`;
+    
         const feeds = await pool.query(selectQuery,[category])
-        return feeds
+        return feeds.rows
+      }
+
+      async get_user_likes(uuid){
+        const query = 'SELECT book_id FROM likes WHERE user_id = $1'
+        const likes = await pool.query(query,[uuid])
+        return likes.rows
+      }
+
+      async create_comment (comment,book_id,user_id){
+        try {
+            const query = 'INSERT INTO comments (comment,book_id,user_id) VALUES ($1,$2,$3)'
+            await pool.query(query,[comment,book_id,user_id])
+        }catch (error){
+            console.error(error)
+        }
+      }
+
+      async get_my_liked_books(uuid){
+        const query = `
+        SELECT 
+        l.user_id,
+        l.book_id,
+        b.*
+    FROM 
+        likes l
+    JOIN 
+        books b ON l.book_id = b.id
+    WHERE 
+        l.user_id = $1;
+    
+      `
+      const res = await pool.query(query,[uuid])
+      return res.rows
       }
       
 }
