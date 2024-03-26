@@ -88,17 +88,18 @@ class Database {
         return response.rows
     }
 
-    async delete_collections(uuid, collectionNames) {
+    async delete_collection(uuid, collection_id) {
         try {
-            const deleteQuery = "DELETE FROM collections WHERE user_id = $1 AND id = ANY($2)";
-            const response = await pool.query(deleteQuery, [uuid, collectionNames]);
+            const deleteQuery = "DELETE FROM collections WHERE user_id = $1 AND id = $2";
+            const response = await pool.query(deleteQuery, [uuid, parseFloat(collection_id)]);
             return {
                 success: true
 
             }
         } catch (error) {
+            console.log(error)
             return {
-                success: false,
+                success: error,
                 message: "Something went wrong"
             }
         }

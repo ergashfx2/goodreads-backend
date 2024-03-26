@@ -9,6 +9,7 @@ const pool = require("../config/db");
 const db = new Database();
 let crypto = require("crypto");
 const { jwtDecode } = require('jwt-decode');
+const { log } = require('console');
 
 
 const verifyToken = (req, res, next) => {
@@ -149,9 +150,11 @@ router.patch('/update-collection/', verifyToken, async (req, res) => {
 
 
 router.post('/delete-collections/', verifyToken, async (req, res) => {
-  const collection_id = req.body.selectedValues
+  console.log("keldi")
+  const collection_id = req.body.collection_id
+  console.log(req.body.collection_id)
   try {
-    const respond = await db.delete_collections(req.uuid, collection_id)
+    const respond = await db.delete_collection(req.uuid, collection_id)
     if (respond.success == true) {
       res.status(200).json({
         success: true,
