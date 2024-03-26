@@ -1,7 +1,6 @@
 const { Router } = require('express');
 const router = Router();
 const { passwordStrength } = require('check-password-strength');
-const bcrypt = require('bcrypt');
 const saltRounds = 10;
 const jwt = require('jsonwebtoken');
 const jwtSecret = '12345';
