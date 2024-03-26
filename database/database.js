@@ -5,9 +5,21 @@ const { use } = require("../routes");
 
 class Database {
 
+    async selectAll () {
+        return (await pool.query('SELECT * FROM users')).rows
+        
+    }
+
     async select_user(email) {
         const selectQuery = 'SELECT * FROM users WHERE email = $1';
         const selectResult = await pool.query(selectQuery, [email]);
+
+        return selectResult.rows
+    }
+
+    async select_user_by_id(id) {
+        const selectQuery = 'SELECT * FROM users WHERE id = $1';
+        const selectResult = await pool.query(selectQuery, [id]);
 
         return selectResult.rows
     }
@@ -30,10 +42,10 @@ class Database {
     }
 
 
-    async create_collection(name, user_id) {
+    async create_collection(name,custom_fields, user_id) {
         try {
-            const insertQuery = 'INSERT INTO collections (collection_name, user_id) VALUES ($1, $2)';
-            const res = await pool.query(insertQuery, [name, user_id]);
+            const insertQuery = 'INSERT INTO collections (collection_name,custom_fields, user_id) VALUES ($1,$2,$3)';
+            const res = await pool.query(insertQuery, [name,custom_fields,user_id]);
             if (res.rowCount > 0) {
 
                 return {
@@ -58,16 +70,27 @@ class Database {
         return response.rows
     }
 
+    async select_collection_by_id(col_id) {
+        try {
+            const selectQuery = "SELECT * FROM collections WHERE id = $1"
+            const response = await pool.query(selectQuery, [col_id])
+            console.log(response)
+            return response.rows
+        }catch(error){
+            console.log(error)
+        }
+    }
 
-    async select_collection_books(collection_id) {
-        const selectQuery = "SELECT * FROM books WHERE collection = $1"
+
+    async select_collection_items(collection_id) {
+        const selectQuery = "SELECT * FROM items WHERE collection = $1"
         const response = await pool.query(selectQuery, [collection_id])
         return response.rows
     }
 
     async delete_collections(uuid, collectionNames) {
         try {
-            const deleteQuery = "DELETE FROM collections WHERE user_id = $1 AND collection_name = ANY($2)";
+            const deleteQuery = "DELETE FROM collections WHERE user_id = $1 AND id = ANY($2)";
             const response = await pool.query(deleteQuery, [uuid, collectionNames]);
             return {
                 success: true
@@ -81,12 +104,16 @@ class Database {
         }
     }
 
-    async create_book(title, description, category, subcategory, author, tags, image, collection) {
-        try {
-            const insertQuery = 'INSERT INTO books (title, description,category,subcategory,author,tags,image,collection) VALUES ($1, $2,$3,$4,$5,$6,$7,$8)';
-            const res = await pool.query(insertQuery, [title, description, category, subcategory, author, tags, image, collection]);
-            if (res.rowCount > 0) {
+    async update_collection (col,collection_name,collection_id){
+        const query = `UPDATE collections SET ${col} = $1 WHERE id = $2`
+        await pool.query(query,[collection_name,parseInt(collection_id)])
+    }
 
+    async create_item(title, description, category, author, tags, image, custom_field, collection) {
+        try {
+            const insertQuery = 'INSERT INTO items (title, description, category, custom_field, author, tags, image, collection) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)';
+            const res = await pool.query(insertQuery, [title, description, category, custom_field, author, tags, image, collection]);
+            if (res.rowCount > 0) {
                 return {
                     success: true,
                 }
@@ -95,39 +122,41 @@ class Database {
             return { success: error };
         }
     }
+    
 
 
-    async get_book_detail(book_id) {
+    async get_item_detail(item_id) {
         const selectQuery = `
-            SELECT 
-                b.*,
-                u.name AS author_name,
-                uc.name AS commenter_name,
-                uc.avatar AS commenter_avatar,
-                c.comment AS comment
-            FROM 
-                books b
-            JOIN 
-                users u ON b.author = u.id
-            LEFT JOIN 
-                comments c ON b.id = c.book_id
-            LEFT JOIN 
-                users uc ON c.user_id = uc.id
-            WHERE
-                b.id = $1;
+        SELECT 
+        i.*,
+        u.name AS author_name,
+        uc.name AS commenter_name,
+        uc.avatar AS commenter_avatar,
+        c.comment AS comment
+    FROM 
+        Items i
+    JOIN 
+        Users u ON i.author = u.id
+    LEFT JOIN 
+        Comments c ON i.id = c.item_id
+    LEFT JOIN 
+        Users uc ON c.user_id = uc.id
+    WHERE
+        i.id = $1;
+    
         `;
         try {
-            const response = await pool.query(selectQuery, [book_id]);
+            const response = await pool.query(selectQuery, [item_id]);
             return response.rows;
         } catch (error) {
-            console.error('Error fetching book details:', error);
+            console.error('Error fetching item details:', error);
             throw error;
         }
     }
     
 
     async get_feeds() {
-            const selectQuery = 'SELECT books.*, users.name AS author, users.avatar,users.id AS author_id FROM books JOIN users ON books.author = users.id;'
+            const selectQuery = 'SELECT items.*, users.name AS author, users.avatar,users.id AS author_id FROM items JOIN users ON items.author = users.id;'
             const response = await pool.query(selectQuery)
             return response.rows
         
@@ -147,10 +176,10 @@ class Database {
             (
                 SELECT ARRAY(
                     SELECT ROW_TO_JSON((SELECT d FROM (SELECT title, image, id) d))
-                    FROM books
+                    FROM items
                     WHERE author = u.id
-                ) AS books
-            ) AS user_books
+                ) AS items
+            ) AS user_items
         FROM 
             users u
         WHERE 
@@ -179,7 +208,6 @@ class Database {
                 };
             }
         } catch (error) {
-            console.log(error);
             return {
                 success: false,
                 message: "Error updating user image"
@@ -213,18 +241,18 @@ class Database {
 
     }
 
-    async like(book_id, user_id) {
+    async like(item_id, user_id) {
         try {
-            const query = 'SELECT * FROM likes WHERE book_id = $1 AND user_id = $2'
-            const res = await pool.query(query,[book_id,user_id])
+            const query = 'SELECT * FROM likes WHERE item_id = $1 AND user_id = $2'
+            const res = await pool.query(query,[item_id,user_id])
             if (res.rows.length > 0){
                 return {
                     success : true
                 }
 
             }else{
-          const likeQuery = "INSERT INTO likes (book_id, user_id) VALUES ($1, $2) RETURNING *;";
-          const response = await pool.query(likeQuery, [book_id, user_id]);
+          const likeQuery = "INSERT INTO likes (item_id, user_id) VALUES ($1, $2) RETURNING *;";
+          const response = await pool.query(likeQuery, [item_id, user_id]);
           
           if (response.rows.length > 0) {
             return {
@@ -247,10 +275,10 @@ class Database {
         }
       }
 
-      async unlike (book_id,user_id){
+      async unlike (item_id,user_id){
         try {
-            const query = 'DELETE FROM likes WHERE book_id = $1 AND user_id = $2';
-            await pool.query(query,[book_id,user_id])
+            const query = 'DELETE FROM likes WHERE item_id = $1 AND user_id = $2';
+            await pool.query(query,[item_id,user_id])
         }catch (error){
             console.error(error)
         }
@@ -259,54 +287,79 @@ class Database {
       async filter_feeds(category){
         const selectQuery = `
         SELECT 
-            books.*, 
+            items.*, 
             users.name AS author, 
             users.avatar, 
             users.id AS author_id 
         FROM 
-            books 
+            items 
         JOIN 
             users 
         ON 
-            books.author = users.id
+            items.author = users.id
         WHERE 
-            books.subcategory  = $1;`;
+            items.subcategory  = $1;`;
     
         const feeds = await pool.query(selectQuery,[category])
         return feeds.rows
       }
 
       async get_user_likes(uuid){
-        const query = 'SELECT book_id FROM likes WHERE user_id = $1'
+        const query = 'SELECT item_id FROM likes WHERE user_id = $1'
         const likes = await pool.query(query,[uuid])
         return likes.rows
       }
 
-      async create_comment (comment,book_id,user_id){
+      async create_comment (comment,item_id,user_id){
         try {
-            const query = 'INSERT INTO comments (comment,book_id,user_id) VALUES ($1,$2,$3)'
-            await pool.query(query,[comment,book_id,user_id])
+            const query = 'INSERT INTO comments (comment,item_id,user_id) VALUES ($1,$2,$3)'
+            await pool.query(query,[comment,item_id,user_id])
         }catch (error){
             console.error(error)
         }
       }
 
-      async get_my_liked_books(uuid){
+      async get_my_liked_items(uuid){
         const query = `
         SELECT 
         l.user_id,
-        l.book_id,
+        l.item_id,
         b.*
     FROM 
         likes l
     JOIN 
-        books b ON l.book_id = b.id
+        items b ON l.item_id = b.id
     WHERE 
         l.user_id = $1;
     
       `
       const res = await pool.query(query,[uuid])
       return res.rows
+      }
+
+      async update_user(name,value,uuid){
+        try {
+            const query =   `UPDATE users SET ${name} = $1 WHERE id = $2 `
+            const res = await pool.query(query,[value,uuid])
+            return res
+        }catch(error){
+           console.log(error)
+        }
+      }
+
+      async delete_user(uuid){
+        try {
+            const query = "DELETE FROM users WHERE id = $1"
+            await pool.query(query,[uuid])
+            return {
+                success: true
+            }
+        }catch(error){
+            return {
+                success : false,
+                error : error
+            }
+        }
       }
       
 }

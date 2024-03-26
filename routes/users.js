@@ -9,11 +9,6 @@ const Database = require('../database/database');
 const pool = require("../config/db");
 const db = new Database();
 let crypto = require("crypto");
-const multer = require('multer');
-const fs = require('fs');
-const path = require('path');
-const Book = require("../database/database")
-const book = new Book()
 const { jwtDecode } = require('jwt-decode');
 
 
@@ -110,10 +105,10 @@ router.get('/my-collections/', verifyToken, async (req, res) => {
 })
 
 router.post('/create-collection/', verifyToken, async (req, res) => {
-  const collection_name = req.body.collection_name
+  const {collection_name,custom_fields} = req.body
   try {
 
-    const selected = await db.select_collection(collection_name)
+    const selected = await db.select_collection(collection_name,req.uuid)
     if (selected.length > 0) {
       return res.status(400).json({
         success: false,
@@ -121,7 +116,7 @@ router.post('/create-collection/', verifyToken, async (req, res) => {
       })
     }
 
-    const respond = await db.create_collection(collection_name, req.uuid)
+    const respond = await db.create_collection(collection_name,custom_fields,req.uuid)
     if (respond.success == true) {
       res.status(200).json({
         success: true,
@@ -142,10 +137,22 @@ router.post('/create-collection/', verifyToken, async (req, res) => {
 })
 
 
+router.patch('/update-collection/', verifyToken, async (req, res) => {
+  const {col,collection_name,collection_id} = req.body
+  await db.update_collection(col,collection_name,collection_id)
+  res.status(200).json({
+    collection_names : collection_name,
+    id : crypto.randomUUID()
+  })
+
+
+})
+
+
 router.post('/delete-collections/', verifyToken, async (req, res) => {
-  const collection_names = req.body.selectedValues
+  const collection_id = req.body.selectedValues
   try {
-    const respond = await db.delete_collections(req.uuid, collection_names)
+    const respond = await db.delete_collections(req.uuid, collection_id)
     if (respond.success == true) {
       res.status(200).json({
         success: true,
@@ -165,13 +172,22 @@ router.post('/delete-collections/', verifyToken, async (req, res) => {
 
 })
 
+router.get('/get-collection/',verifyToken,async (req,res)=>{
+  const col_id = req.query.id;
+  const collection =  await db.select_collection_by_id(parseInt(col_id))
+  res.status(200).json({
+    collection : collection,
+    id : crypto.randomUUID()
+  })
+})
 
-router.get('/collection-books/', verifyToken, async (req, res) => {
+
+router.get('/collection-items/', verifyToken, async (req, res) => {
   const collectionId = req.query.collection_id;
-  const collection_books = await db.select_collection_books(collectionId.toString());
+  const collection_items = await db.select_collection_items(collectionId.toString());
   res.status(200).json({
     success: true,
-    books: collection_books,
+    items: collection_items,
     collection_id: req.query.collection_id,
     message: "ok"
   })
@@ -179,11 +195,12 @@ router.get('/collection-books/', verifyToken, async (req, res) => {
 
 })
 
-router.post('/create-book/', verifyToken, async (req, res) => {
+router.post('/create-item/', verifyToken, async (req, res) => {
+  console.log(req.body)
+  const {title,description,category,tags,images,collection,customData} = req.body
   try {
-    const book = await db.create_book(req.body.title, req.body.description, req.body.category, req.body.subcategory, req.uuid, req.body.tags, req.body.images[0], req.body.collection)
-    if (book.success) {
-      0
+    const item = await db.create_item(title,description,category,req.uuid,tags,images[0],[customData],collection)
+    if (item.success) {
       res.status(200).json({
         success: true,
       })
@@ -195,11 +212,12 @@ router.post('/create-book/', verifyToken, async (req, res) => {
 })
 
 
-router.get('/book-detail/', async (req, res) => {
-  const book = await db.get_book_detail(req.query.book_id);
+router.get('/item-detail/', async (req, res) => {
+  console.log(req.query.item_id)
+  const item = await db.get_item_detail(req.query.item_id);
   res.status(200).json({
     success: true,
-    book: book,
+    item: item,
     message: "ok"
   })
 })
@@ -212,7 +230,7 @@ router.get('/get-feeds/', async (req, res) => {
           const token = req.headers['authorization'].split(' ')[1];
           const decodedToken = jwtDecode(token);
           const all_likes = await db.get_user_likes(decodedToken.uuid);
-          likes = all_likes.map((book) => book.book_id);
+          likes = all_likes.map((item) => item.item_id);
       }
 
       let feeds;
@@ -237,7 +255,6 @@ router.get('/get-feeds/', async (req, res) => {
 
 router.get('/my-profile/', verifyToken, async (req, res) => {
   const profile = await db.my_profile(req.uuid)
-  console.log(profile)
   res.status(200).json({
     success: true,
     profile: profile
@@ -299,7 +316,7 @@ router.patch('/update-user/', verifyToken, async (req, res) => {
 
 router.post('/like/', verifyToken, async (req, res) => {
   const like = req.body
-  const response = await db.like(Number(like.book_id), req.uuid)
+  const response = await db.like(like.item_id, req.uuid)
   if (response.success) {
     res.status(200).json({
       success: true,
@@ -310,7 +327,7 @@ router.post('/like/', verifyToken, async (req, res) => {
 
 router.post('/unlike/', verifyToken, async (req, res) => {
   const like = req.body
-  const response = await db.unlike(like.book_id, req.uuid)
+  const response = await db.unlike(like.item_id, req.uuid)
     res.status(200).json({
       success: true,
       id: crypto.randomUUID()
@@ -320,7 +337,7 @@ router.post('/unlike/', verifyToken, async (req, res) => {
 
 router.post('/comment/', verifyToken, async (req, res) => {
   const comment = req.body
-  await db.create_comment(comment.comment,comment.book_id, req.uuid)
+  await db.create_comment(comment.comment,comment.item_id, req.uuid)
     res.status(200).json({
       success: true,
       id: crypto.randomUUID()
@@ -328,12 +345,12 @@ router.post('/comment/', verifyToken, async (req, res) => {
 
 })
 
-router.get('/my-liked-books/', verifyToken, async (req, res) => {
+router.get('/my-liked-items/', verifyToken, async (req, res) => {
   const uuid = req.uuid
-  const books = await db.get_my_liked_books(uuid)
+  const items = await db.get_my_liked_items(uuid)
   res.status(200).json({
     success: true,
-    books: books
+    items: items
   })
 })
 
