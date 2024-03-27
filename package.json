@@ -1,5 +1,6 @@
 {
   "dependencies": {
+    "bcrypt": "^5.1.1",
     "check-password-strength": "^2.0.10",
     "compression": "^1.7.4",
     "cors": "^2.8.5",

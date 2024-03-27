@@ -10,7 +10,7 @@ const db = new Database();
 let crypto = require("crypto");
 const { jwtDecode } = require('jwt-decode');
 const { log } = require('console');
-
+const bcrypt = require('bcrypt');
 
 const verifyToken = (req, res, next) => {
   const token = req.headers.authorization.split(' ')[1];
