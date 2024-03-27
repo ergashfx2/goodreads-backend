@@ -10,6 +10,17 @@ class Database {
         
     }
 
+    async select_itemsAll (user_id) {
+        try {
+            const query = 'SELECT * FROM items WHERE author = $1'
+            const res = await pool.query(query,[user_id])
+            return res.rows
+        }catch (error){
+            console.log(error)
+        }
+        
+    }
+
     async select_user(email) {
         const selectQuery = 'SELECT * FROM users WHERE email = $1';
         const selectResult = await pool.query(selectQuery, [email]);
@@ -401,6 +412,22 @@ class Database {
             }
         }
       }
+
+      async delete_items(item_name,item_id) {
+        try {
+            const deleteQuery = `DELETE FROM ${item_name} WHERE id = $1`;
+            const response = await pool.query(deleteQuery, [item_id]);
+            return {
+                success: true
+
+            }
+        } catch (error) {
+            return {
+                success: error,
+                message: "Something went wrong"
+            }
+        }
+    }
       
 }
 

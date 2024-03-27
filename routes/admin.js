@@ -112,21 +112,16 @@ router.patch('/updates-datas/user/', async (req, res) => {
 
 
 router.get('/get-userAll/',async (req,res)=>{
+  const items = await db.select_itemsAll(req.query.user_id)
   res.status(200).json({
     user : await db.select_user_by_id(req.query.user_id),
-    collections : await db.get_collections(req.query.user_id)
-  })
-})
-
-router.get('/get-collectionItems/',async (req,res)=>{
-  res.status(200).json({
-    items : await db.select_collection_by_id(req.query.collection_id),
+    collections : await db.get_collections(req.query.user_id),
+    items : items,
   })
 })
 
 router.delete('/delete-user/:id', async (req, res) => {
   const userId = req.params.id;
-  console.log(userId)
   const respond = await db.delete_user(userId)
   if (respond.success){
     res.status(200).json({
@@ -136,7 +131,25 @@ router.delete('/delete-user/:id', async (req, res) => {
     })
   }
 
+})
+
+
+router.post('/delete-items/', async (req, res) => {
+  const item_id = req.body.item_id;
+  const item_name = req.body.item_name;
+  const respond = await db.delete_items(item_name,item_id)
+  if (respond.success){
+    res.status(200).json({
+      success : true,
+      message :  `${item_name} deleted successfully`,
+      id : crypto.randomUUID()
+    })
+  }
+
+  
+
 });
+
 
 
 module.exports = router
