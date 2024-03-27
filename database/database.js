@@ -73,8 +73,7 @@ class Database {
     async select_collection_by_id(col_id) {
         try {
             const selectQuery = "SELECT * FROM collections WHERE id = $1"
-            const response = await pool.query(selectQuery, [col_id])
-            console.log(response)
+            const response = await pool.query(selectQuery, [parseInt(col_id)])
             return response.rows
         }catch(error){
             console.log(error)
@@ -113,18 +112,58 @@ class Database {
     async create_item(title, description, category, author, tags, image, custom_field, collection) {
         try {
             const insertQuery = 'INSERT INTO items (title, description, category, custom_field, author, tags, image, collection) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)';
+            console.log(custom_field)
             const res = await pool.query(insertQuery, [title, description, category, custom_field, author, tags, image, collection]);
+
             if (res.rowCount > 0) {
                 return {
                     success: true,
                 }
             }
         } catch (error) {
-            return { success: error };
+            console.log(error)
+        }
+    }
+
+    async updateItem(title, description, category, customField, author, tags, image, collection,item_id) {
+        try {
+            const updateQuery = `UPDATE items 
+                                 SET title = $1, description = $2, category = $3, custom_field = $4, author = $5, tags = $6, image = $7, collection = $8
+                                 WHERE id = $9`;
+            const res = await pool.query(updateQuery, [title, description, category, customField, author, tags, image, collection, item_id]);
+            console.log(res)
+            if (res.rowCount > 0) {
+                return {
+                    success: true,
+                };
+            } else {
+                return {
+                    success: false,
+                    message: "No item with the provided ID found.",
+                };
+            }
+        } catch (error) {
+            return { success: false, error };
         }
     }
     
 
+    
+    async delete_item(uuid, item_ids) {
+        try {
+            const deleteQuery = "DELETE FROM items WHERE author = $1 AND id = ANY($2)";
+            const response = await pool.query(deleteQuery, [uuid, item_ids]);
+            return {
+                success: true
+
+            }
+        } catch (error) {
+            return {
+                success: false,
+                message: "Something went wrong"
+            }
+        }
+    }
 
     async get_item_detail(item_id) {
         const selectQuery = `

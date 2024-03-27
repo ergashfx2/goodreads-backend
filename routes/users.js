@@ -150,9 +150,7 @@ router.patch('/update-collection/', verifyToken, async (req, res) => {
 
 
 router.post('/delete-collections/', verifyToken, async (req, res) => {
-  console.log("keldi")
   const collection_id = req.body.collection_id
-  console.log(req.body.collection_id)
   try {
     const respond = await db.delete_collection(req.uuid, collection_id)
     if (respond.success == true) {
@@ -198,24 +196,56 @@ router.get('/collection-items/', verifyToken, async (req, res) => {
 })
 
 router.post('/create-item/', verifyToken, async (req, res) => {
-  console.log(req.body)
   const {title,description,category,tags,images,collection,customData} = req.body
   try {
-    const item = await db.create_item(title,description,category,req.uuid,tags,images[0],[customData],collection)
+    const item = await db.create_item(title,description,category,req.uuid,tags,images[0],customData,parseInt(collection))
     if (item.success) {
       res.status(200).json({
         success: true,
       })
     }
   } catch (err) {
-    console.log(err)
 
   }
 })
 
+router.delete('/delete-item/',verifyToken,async (req,res)=>{
+  const respond = await db.delete_item(req.uuid,req.query.item_id)
+  if (respond.success){
+    res.status(200).json({
+      success : true,
+      id : crypto.randomUUID
+    })
+  }else {
+    req.status(403).json({
+      success : false,
+      id : crypto.randomUUID
+    })
+  }
+
+})
+
+
+router.patch('/update-item/', verifyToken, async (req, res) => {
+  try {
+    const { title, description, tags, images, customData, category, collection, id } = req.body;
+    const imageUrl = images[0];
+    await db.updateItem(title, description, category, customData, req.uuid, tags, imageUrl, collection, id);
+
+    res.status(200).json({
+      success: true,
+    });
+  } catch (error) {
+    console.error('Error updating item:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Internal server error',
+    });
+  }
+});
+
 
 router.get('/item-detail/', async (req, res) => {
-  console.log(req.query.item_id)
   const item = await db.get_item_detail(req.query.item_id);
   res.status(200).json({
     success: true,
