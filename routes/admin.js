@@ -150,6 +150,35 @@ router.post('/delete-items/', async (req, res) => {
 
 });
 
+router.patch('/update-collection/',async (req, res) => {
+  const {col,collection_name,collection_id} = req.body
+  console.log(req.body)
+  await db.update_collection(col,collection_name,collection_id)
+  res.status(200).json({
+    collection_names : collection_name,
+    id : crypto.randomUUID()
+  })
+
+
+})
+
+router.patch('/update-item/', async (req, res) => {
+  try {
+    const { title, description, tags, images, customData, category, collection, id,user_id } = req.body;
+    const imageUrl = images[0];
+    await db.updateItem(title, description, category, customData, user_id, tags, imageUrl, collection, id);
+
+    res.status(200).json({
+      success: true,
+    });
+  } catch (error) {
+    console.error('Error updating item:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Internal server error',
+    });
+  }
+});
 
 
 module.exports = router
