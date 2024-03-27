@@ -4,7 +4,7 @@ const cors = require('cors');
 const compression = require('compression');
 const app = express();
 
-const allowedOrigins = ['https://readopia-backend-2.onrender.com'];
+const allowedOrigins = ['https://readopia.vercel.app'];
 app.use(cors({
   origin: function (origin, callback) {
     if (!origin || allowedOrigins.includes(origin)) {
