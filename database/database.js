@@ -53,7 +53,7 @@ class Database {
     }
 
 
-    async create_collection(name,custom_fields, user_id) {
+    async create_collection(name,custom_fields=null, user_id) {
         try {
             const insertQuery = 'INSERT INTO collections (collection_name,custom_fields, user_id) VALUES ($1,$2,$3)';
             const res = await pool.query(insertQuery, [name,custom_fields,user_id]);
