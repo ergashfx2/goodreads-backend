@@ -42,7 +42,6 @@ router.post('/create/', async (req, res) => {
   try {
     let { name, email, password } = req.body;
     const selectResult = await db.select_user(email)
-    (selectResult)
     if (selectResult.length > 0) {
       return res.status(400).json({ message: 'User with this email already exists' });
     }
