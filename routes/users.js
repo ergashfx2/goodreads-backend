@@ -42,7 +42,7 @@ router.post('/create/', async (req, res) => {
   try {
     let { name, email, password } = req.body;
     const selectResult = await db.select_user(email)
-    console.log(selectResult)
+    (selectResult)
     if (selectResult.length > 0) {
       return res.status(400).json({ message: 'User with this email already exists' });
     }
@@ -128,7 +128,7 @@ router.post('/create-collection/', verifyToken, async (req, res) => {
       })
     }
   } catch (error) {
-    console.log(error)
+    (error)
   }
 
 
@@ -164,7 +164,7 @@ router.post('/delete-collections/', verifyToken, async (req, res) => {
       })
     }
   } catch (error) {
-    console.log(error)
+    (error)
   }
 
 
@@ -265,7 +265,7 @@ router.get('/get-feeds/', async (req, res) => {
 
       let feeds;
       if (req.query.category) {
-          console.log(req.query.category);
+          (req.query.category);
           feeds = await db.filter_feeds(req.query.category);
       } else {
           feeds = await db.get_feeds();
@@ -318,7 +318,7 @@ router.patch('/update-user/', verifyToken, async (req, res) => {
         message: "Updated successfully",
         image: req.body.image
       })
-      console.log("Success")
+      ("Success")
     } else {
       res.status(400).json({
         success: false,

@@ -16,7 +16,7 @@ class Database {
             const res = await pool.query(query,[user_id])
             return res.rows
         }catch (error){
-            console.log(error)
+            (error)
         }
         
     }
@@ -87,7 +87,7 @@ class Database {
             const response = await pool.query(selectQuery, [parseInt(col_id)])
             return response.rows
         }catch(error){
-            console.log(error)
+            (error)
         }
     }
 
@@ -107,7 +107,7 @@ class Database {
 
             }
         } catch (error) {
-            console.log(error)
+            (error)
             return {
                 success: error,
                 message: "Something went wrong"
@@ -123,7 +123,7 @@ class Database {
     async create_item(title, description, category, author, tags, image, custom_field, collection) {
         try {
             const insertQuery = 'INSERT INTO items (title, description, category, custom_field, author, tags, image, collection) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)';
-            console.log(custom_field)
+            (custom_field)
             const res = await pool.query(insertQuery, [title, description, category, custom_field, author, tags, image, collection]);
 
             if (res.rowCount > 0) {
@@ -132,7 +132,7 @@ class Database {
                 }
             }
         } catch (error) {
-            console.log(error)
+            (error)
         }
     }
 
@@ -142,7 +142,7 @@ class Database {
                                  SET title = $1, description = $2, category = $3, custom_field = $4, author = $5, tags = $6, image = $7, collection = $8
                                  WHERE id = $9`;
             const res = await pool.query(updateQuery, [title, description, category, customField, author, tags, image, collection, item_id]);
-            console.log(res)
+            (res)
             if (res.rowCount > 0) {
                 return {
                     success: true,
@@ -247,7 +247,7 @@ class Database {
         try {
             const response = await pool.query(updateQuery, [uuid, image]);
             if (response.rowCount > 0) {
-                console.log(response.rows)
+                (response.rows)
                 return {
                     success: true,
                     message: crypto.randomUUID()
@@ -283,7 +283,7 @@ class Database {
                 };
             }
         } catch (error) {
-            console.log(error);
+            (error);
             return {
                 success: false,
                 message: "Error updating user image"
@@ -394,7 +394,7 @@ class Database {
             const res = await pool.query(query,[value,uuid])
             return res
         }catch(error){
-           console.log(error)
+           (error)
         }
       }
 

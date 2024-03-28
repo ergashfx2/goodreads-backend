@@ -152,7 +152,7 @@ router.post('/delete-items/', async (req, res) => {
 
 router.patch('/update-collection/',async (req, res) => {
   const {col,collection_name,collection_id} = req.body
-  console.log(req.body)
+  (req.body)
   await db.update_collection(col,collection_name,collection_id)
   res.status(200).json({
     collection_names : collection_name,
