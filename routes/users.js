@@ -194,10 +194,8 @@ router.get('/collection-items/', verifyToken, async (req, res) => {
 
 router.post('/create-item/', verifyToken, async (req, res) => {
   const {title,description,category,tags,images,collection,customData} = req.body
-  console.log(req.body)
   try {
     const item = await db.create_item(title,description,category,req.uuid,tags,images[0],[customData],parseInt(collection))
-    console.log(item)
     if (item.success) {
       res.status(200).json({
         success: true,

@@ -15,7 +15,7 @@ class Database {
             const query = 'SELECT * FROM items WHERE author = $1'
             const res = await pool.query(query,[user_id])
             return res.rows
-        }catch {
+        }catch(error) {
 
         }
         
@@ -47,7 +47,7 @@ class Database {
                     "uuid": uuid
                 }
             }
-        } catch  {
+        } catch(error)  {
             return { success: false };
         }
     }
@@ -389,7 +389,6 @@ class Database {
             const res = await pool.query(query,[value,uuid])
             return res
         }catch(error){
-           (error)
         }
       }
 
