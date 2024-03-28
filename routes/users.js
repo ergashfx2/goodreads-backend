@@ -9,7 +9,6 @@ const pool = require("../config/db");
 const db = new Database();
 let crypto = require("crypto");
 const { jwtDecode } = require('jwt-decode');
-const { log } = require('console');
 const bcrypt = require('bcrypt');
 
 const verifyToken = (req, res, next) => {
@@ -49,8 +48,7 @@ router.post('/create/', async (req, res) => {
     }
 
     if (passwordStrength(password).value == 'Too weak' || passwordStrength(password).value == 'Weak') {
-      console.log(passwordStrength(password).value)
-      return res.status(400).json({ message: 'Password is too weak' });
+      return res.status(400).json({ message: 'Password is too common. Please try different password' });
     }
     const salt = await bcrypt.genSalt(saltRounds);
     const hashedPassword = await bcrypt.hash(password, salt);
